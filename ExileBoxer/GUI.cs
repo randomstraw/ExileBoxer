@@ -2,10 +2,12 @@
 using Loki.Game.GameData;
 using Loki.Game.NativeWrappers;
 using Loki.Game.Objects;
+using Loki.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -44,6 +46,13 @@ namespace ExileBoxer
             {
                 LokiPoe.ObjectManager.ClearCache();
 
+                #region Button -> Text
+                if (TheVariables.PAUSE)
+                    button7.Text = "take nearest IslandTransition (Stairs etc)  and RESUME";
+                else
+                    button7.Text = "take nearest IslandTransition (Stairs etc)  and PAUSE";
+                #endregion
+
                 #region Info -> Leader
                 if (LokiPoe.ObjectManager.Me.PartyStatus == PartyStatus.PartyMember)
                 {
@@ -75,30 +84,17 @@ namespace ExileBoxer
                         button4.Enabled = false;
 
                     #endregion
-                    #region Area Transition controls
-                    foreach(AreaTransition a in TheVariables.availableAreaTransitions)
+                    #region Area Transition controls / island
+                    if (LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().Count() > 0)
                     {
-                        if (comboBox1.Items.Contains(a.Name))
-                            return;
-
-                        comboBox1.Items.Add(a.Name);
-                    }
-                    foreach(var a in comboBox1.Items)
-                    {
-                        bool xd = false;
-
-                        foreach(AreaTransition b in TheVariables.availableAreaTransitions)
-                        {
-                            if (a == b.Name)
-                                xd = true;
-                        }
-
-                        if (!xd)
-                            comboBox1.Items.Remove(a);
-                    }
-
-                    if (comboBox1.Items.Count > 0)
                         button6.Enabled = true;
+                        button7.Enabled = true;
+                    }
+                    else
+                    {
+                        button6.Enabled = false;
+                        button7.Enabled = false;
+                    }
 
                     #endregion
                 }
@@ -199,15 +195,22 @@ namespace ExileBoxer
                 else
                     label11.ForeColor = bad;
 
-                if (TheVariables.takeAreaTransition.Length > 1)
+                if (TheVariables.takeNearestAreaTransition)
                     label21.ForeColor = good;
                 else
                     label21.ForeColor = bad;
 
-                if (TheVariables.temp)
+                if (TheVariables.takeNearestIslandTransition)
                     label22.ForeColor = good;
                 else
                     label22.ForeColor = bad;
+
+                if (TheVariables.PAUSE)
+                    label23.ForeColor = good;
+                else
+                    label23.ForeColor = bad;
+
+                
 
                 #endregion
 
@@ -250,23 +253,81 @@ namespace ExileBoxer
         {
             TheVariables.targetTown = TheVariables.townIdLeader;
         }
-        #endregion
 
         private void button6_Click(object sender, EventArgs e)
         {
-            using (LokiPoe.AcquireFrame())
-            {
-                TheVariables.takeAreaTransition = comboBox1.SelectedItem.ToString(); //LokiPoe.ObjectManager.AreaTransition(comboBox1.SelectedItem.ToString());
-            }
+            TheVariables.takeNearestAreaTransition = true;
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
+            if (TheVariables.PAUSE)
+                TheVariables.PAUSE = false;
+            else
+                TheVariables.takeNearestIslandTransition = true;
+        }
+        #endregion
+
+        private void button8_Click(object sender, EventArgs e)
+        {
             using (LokiPoe.AcquireFrame())
             {
-                TheVariables.takeAreaTransition = string.Empty;
+                LokiPoe.ObjectManager.ClearCache();
+
+                TheVariables.PAUSE = false;
+
+                TheVariables.acceptPartyInviteFrom = string.Empty;
+                TheVariables.nameLeader = string.Empty;
+                TheVariables.areaIdLeader = string.Empty;
+                TheVariables.areaIdMe = string.Empty;
+                TheVariables.areaNameMe = string.Empty;
+                TheVariables.areaNameLeader = string.Empty;
+                TheVariables.targetTown = string.Empty;
+                TheVariables.townIdLeader = "0_0_0";
+                TheVariables.townIdMe = "0_0_0";
+                TheVariables.currentAreaTransition = string.Empty;
+
+                TheVariables.leaveParty = false;
+                TheVariables.makePortal = false;
+                TheVariables.moveToMiddleOfTown = false;
+                TheVariables.checkBox1 = false;
+                TheVariables.checkBox2 = false;
+                TheVariables.inTownMe = false;
+                TheVariables.inTownLeader = false;
+                TheVariables.takeNearestAreaTransition = false;
+                TheVariables.takeNearestIslandTransition = false;
+
+                TheVariables.makePortalTimer = new Stopwatch();
+                TheVariables.takeWpTimer = new Stopwatch();
+                TheVariables.activateInstanceTimer = new Stopwatch();
+                TheVariables.activateInstanceManagerTimer = new Stopwatch();
+                TheVariables.globalTimer = new Stopwatch();
+
+                TheVariables.takePortalFromTownToArea = null;
+                TheVariables.takePortalFromAreaToTown = null;
+                TheVariables.portalFromTownToArea = null;
+                TheVariables.portalFromAreaToTown = null;
+
+                TheVariables.numUpDown1 = 0;
+                TheVariables.numUpDown2 = 0;
+                TheVariables.numUpDown3 = 0;
+                TheVariables.distanceLeader = 0;
+
+                TheVariables.posLeader = new Vector2i();
+                TheVariables.posMe = new Vector2i();
+                TheVariables.town1middle = new Vector2i(252, 245);
+                TheVariables.town2middle = new Vector2i(185, 169);
+                TheVariables.town3middle = new Vector2i(251, 293);
+                TheVariables.takeNearestIslandTransitionOldPosition = new Vector2i(0,0);
+
+                TheVariables.desiredWP = new WorldAreaEntry();
+
+                TheVariables.availableAreaTransitions = new List<AreaTransition>();
+
             }
         }
+
+        
 
         //LokiPoe.InstanceInfo.PartyMembers.First(x => x.MemberStatus == PartyStatus.PartyLeader).PlayerEntry.
 

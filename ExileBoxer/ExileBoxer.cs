@@ -29,6 +29,11 @@ namespace ExileBoxer
         public void Start() 
         {
             Logic = new PrioritySelector(
+                //PAUSE
+                new Decorator(ret => TheVariables.PAUSE,
+                    new Action(ret => RunStatus.Success)
+                    ),
+
                 //reset TheVariables - works
                 new Decorator(ret => LokiPoe.ObjectManager.Me.IsInTown,
                     new Sequence(
@@ -71,15 +76,19 @@ namespace ExileBoxer
                     TheLogic.MakeTP()
                     ),
 
-                
                 //inArea or town stuff
-                new Decorator(ret => TheVariables.takeAreaTransition.Length > 1 && TheVariables.temp,
+                new Decorator(ret => TheVariables.takeNearestAreaTransition,
                     TheLogic.MoveToAndTakeAreaTransition()
                     //new Action(ret => ExileBoxer.Log.Debug("i want to take a transition now.."))
                     ),
 
+                //inArea #0
+                new Decorator(ret => TheVariables.takeNearestIslandTransition,
+                    TheLogic.MoveToAndTakeIslandTransition()
+                    ),
 
-                //inArea stuff #1
+
+                //inArea stuff #1 - works
                 //fight! return Success if we are fighting, so move does not get triggered pls!
                 new Decorator(ret => !LokiPoe.ObjectManager.Me.IsInTown && TheVariables.checkBox2,
                     TheLogic.Fight()
@@ -147,11 +156,6 @@ namespace ExileBoxer
                     TheVariables.distanceLeader = getDistance(LokiPoe.InstanceInfo.PartyMembers.First(pp => pp.MemberStatus == PartyStatus.PartyLeader).PlayerEntry);
                     TheVariables.townIdLeader = string.Concat(TheVariables.areaIdLeader.Substring(0, 4), "town");
                     TheVariables.townIdMe = string.Concat(LokiPoe.LocalData.WorldAreaId.Substring(0,4), "town");
-
-                    if (TheVariables.takeAreaTransition.Length < 1)
-                        TheVariables.temp = false;
-                    else
-                        TheVariables.temp = true;
 
                     if (TheVariables.areaIdLeader == TheVariables.townIdLeader)
                         TheVariables.inTownLeader = true;
@@ -355,10 +359,13 @@ namespace ExileBoxer
         }
         public static NetworkObject getWaypointOfCurrentArea()
         {
-            if (LokiPoe.ObjectManager.Waypoint == null)
-                return null;
+            using (LokiPoe.AcquireFrame())
+            {
+                if (LokiPoe.ObjectManager.Waypoint == null)
+                    return null;
 
-            return LokiPoe.ObjectManager.Waypoint;
+                return LokiPoe.ObjectManager.Waypoint;
+            }
         }
         public static bool WaypointAvailable(string destination)
         {

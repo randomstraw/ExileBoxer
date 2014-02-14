@@ -13,8 +13,7 @@ namespace ExileBoxer
 {
     public class TheVariables
     {
-        public static bool temp = false;
-
+        public static bool PAUSE = false;
 
         public static string acceptPartyInviteFrom = string.Empty;
         public static string nameLeader = string.Empty;
@@ -25,7 +24,7 @@ namespace ExileBoxer
         public static string targetTown = string.Empty;
         public static string townIdLeader = "0_0_0";
         public static string townIdMe = "0_0_0";
-        public static string takeAreaTransition = string.Empty;
+        public static string currentAreaTransition = string.Empty;
 
         public static bool leaveParty = false;
         public static bool makePortal = false;
@@ -34,11 +33,14 @@ namespace ExileBoxer
         public static bool checkBox2 = false;
         public static bool inTownMe = false;
         public static bool inTownLeader = false;
+        public static bool takeNearestAreaTransition = false;
+        public static bool takeNearestIslandTransition = false;
 
         public static Stopwatch makePortalTimer = new Stopwatch();
         public static Stopwatch takeWpTimer = new Stopwatch();
         public static Stopwatch activateInstanceTimer = new Stopwatch();
         public static Stopwatch activateInstanceManagerTimer = new Stopwatch();
+        public static Stopwatch globalTimer = new Stopwatch();
 
         public static Portal takePortalFromTownToArea = null;
         public static Portal takePortalFromAreaToTown = null;
@@ -55,6 +57,7 @@ namespace ExileBoxer
         public static Vector2i town1middle = new Vector2i(252, 245);
         public static Vector2i town2middle = new Vector2i(185, 169);
         public static Vector2i town3middle = new Vector2i(251, 293);
+        public static Vector2i takeNearestIslandTransitionOldPosition = new Vector2i(0,0);
 
         public static WorldAreaEntry desiredWP = new WorldAreaEntry();
 

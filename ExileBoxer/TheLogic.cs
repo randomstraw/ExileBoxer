@@ -88,7 +88,14 @@ namespace ExileBoxer
                     new Sequence(
                         new Action(ret => ExileBoxer.Log.Debug("successfully switched town!")),
                         new Action(ret => TheVariables.targetTown = ""),
-                        new Action(ret => TheVariables.moveToMiddleOfTown = true),
+                        new Action(ret => {
+
+                            if(TheVariables.townIdMe.Contains("2_town"))
+                                TheVariables.moveToMiddleOfTown = false;
+                            else
+                                TheVariables.moveToMiddleOfTown = true;
+
+                        }),
                         new Action(ret => RunStatus.Success)
                         )
                     ),
@@ -151,7 +158,7 @@ namespace ExileBoxer
                             ),
                         new Decorator(ret => TheVariables.town1middle.Distance(LokiPoe.ObjectManager.Me.Position) <= 15,
                             new Sequence(
-                                CommonBehaviors.MoveTo(ret => TheVariables.town2middle, ret => "", 20),
+                                CommonBehaviors.MoveTo(ret => TheVariables.town2middle, ret => "", 10),
                                 new Action(ret => ExileBoxer.Log.Debug("moved to middle of 1_town")),
                                 new Action(ret => TheVariables.moveToMiddleOfTown = false)
                                 )
@@ -165,7 +172,7 @@ namespace ExileBoxer
                             ),
                         new Decorator(ret => TheVariables.town2middle.Distance(LokiPoe.ObjectManager.Me.Position) <= 15,
                             new Sequence(
-                                CommonBehaviors.MoveTo(ret => TheVariables.town2middle, ret => "", 20),
+                                CommonBehaviors.MoveTo(ret => TheVariables.town2middle, ret => "", 10),
                                 new Action(ret => ExileBoxer.Log.Debug("moved to middle of 2_town")),
                                 new Action(ret => TheVariables.moveToMiddleOfTown = false)
                                 )
@@ -179,7 +186,7 @@ namespace ExileBoxer
                             ),
                         new Decorator(ret => TheVariables.town3middle.Distance(LokiPoe.ObjectManager.Me.Position) <= 15,
                             new Sequence(
-                                CommonBehaviors.MoveTo(ret => TheVariables.town3middle, ret => "", 20),
+                                CommonBehaviors.MoveTo(ret => TheVariables.town3middle, ret => "", 10),
                                 new Action(ret => ExileBoxer.Log.Debug("moved to middle of 3_town")),
                                 new Action(ret => TheVariables.moveToMiddleOfTown = false)
                                 )
@@ -190,12 +197,11 @@ namespace ExileBoxer
         }
         public static Composite MoveToAndTakeAreaTransition(bool newInstance = false)
         {
-            AreaTransition at = null;
-            
             try
             {
-                //at = TheVariables.availableAreaTransitions.First(w => w.Name == TheVariables.takeAreaTransition);
-                at = LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().FirstOrDefault();
+                if (LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().Count() < 1)
+                    return new Action(ret => BotMain.Stop("areaTransition error"));
+
             }
             catch(Exception e)
             {
@@ -203,85 +209,108 @@ namespace ExileBoxer
                 BotMain.Stop("errör");
             }
 
-            if (at == null)
-                return new Sequence(
-                    new Action(ret => ExileBoxer.Log.Debug("failed miserably")),
-                    new Action(ret => ExileBoxer.Log.Debug("### " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().FirstOrDefault().Name)),
-                    new Action(ret => TheVariables.takeAreaTransition = "")
-                    );
-
             return new PrioritySelector(
-                new Decorator(ret => at.Name == TheVariables.areaNameMe,
-                    new Sequence(
-                        new Action(ret => TheVariables.takeAreaTransition = string.Empty),
-                        new Action(ret => at = null),
-                        new Action(ret => ExileBoxer.Log.Debug("successfully took area transition! congratz!"))
-                        //new Action(ret => Navigator.PlayerMover.Stop())
-                        //should add a move to townmiddle, if we entered a town this way...
-                        )
+                new Decorator(ret => !TheVariables.globalTimer.IsRunning,
+                    new Action(ret => TheVariables.globalTimer.Start())
                     ),
-                new Decorator(ret => at.Name != TheVariables.areaNameMe,
+                new Decorator(ret => TheVariables.globalTimer.IsRunning && TheVariables.globalTimer.ElapsedMilliseconds > 349,
                     new PrioritySelector(
-                        new Decorator(ret => at.Distance > 20,
-                            CommonBehaviors.MoveTo(ret => at.Position, ret => "moving to area transition: " + at.Name, 5)
+                        new Decorator(ret => TheVariables.currentAreaTransition.Length < 1,
+                            new Sequence(
+                                new Action(ret => TheVariables.currentAreaTransition = LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name),
+                                new Action(ret => TheVariables.globalTimer.Reset()),
+                                new Action(ret => RunStatus.Success)
+                                )
                             ),
-                        new Decorator(ret => at.Distance <= 10,
+                        new Decorator(ret => TheVariables.currentAreaTransition.Length > 0,
                             new PrioritySelector(
-                                new Decorator(ret => !newInstance,
-                                    new PrioritySelector(
-                                        new Decorator(ret => !TheVariables.activateInstanceTimer.IsRunning,
-                                            new Sequence(
-                                                new Action(ret => ExileBoxer.Log.Debug("starting activateInstanceTimer")),
-                                                new Action(ret => TheVariables.activateInstanceTimer.Start())
-                                                )
-                                            ),
-                                        new Decorator(ret => TheVariables.activateInstanceTimer.IsRunning && TheVariables.activateInstanceTimer.ElapsedMilliseconds > 765,
-                                            new PrioritySelector(
-                                                new Decorator(ret => LokiPoe.Gui.IsInstanceManagerOpen,
-                                                    new Sequence(
-                                                        new Action(ret => ExileBoxer.Log.Debug("something went wrong! ERROR: MoveToAndTakeAreaTransition#!newInstance"))
-                                                        //add a "clear gui()" pls...!
-                                                        )
-                                                    ),
-                                                new Decorator(ret => !LokiPoe.Gui.IsInstanceManagerOpen,
-                                                    new Sequence(
-                                                        new Action(ret => ExileBoxer.Log.Debug("opening InstanceManager for: " + at.Name)),
-                                                        new Action(ret => TheVariables.activateInstanceTimer.Reset()),
-                                                        new Action(ret => at.Interact(false, false, LokiPoe.InputTargetType.MustMatchTarget))
-                                                        )
-                                                    )
-                                                )
-                                            )
+                                new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name != TheVariables.currentAreaTransition,
+                                    new Sequence(
+                                        new Action(ret => TheVariables.takeNearestAreaTransition = false),
+                                        new Action(ret => TheVariables.currentAreaTransition = string.Empty),
+                                        new Action(ret => ExileBoxer.Log.Debug("successfully took area transition! congratz!")),
+                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                        //new Action(ret => Navigator.PlayerMover.Stop())
+                                        //should add a move to townmiddle, if we entered a town this way...
                                         )
                                     ),
-                                new Decorator(ret => newInstance,
+                                new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name == TheVariables.currentAreaTransition,
                                     new PrioritySelector(
-                                        new Decorator(ret => !TheVariables.activateInstanceTimer.IsRunning,
-                                            new Sequence(
-                                                new Action(ret => ExileBoxer.Log.Debug("starting activateInstanceTimer")),
-                                                new Action(ret => TheVariables.activateInstanceTimer.Start())
-                                                )
+                                        new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Distance > 20,
+                                            CommonBehaviors.MoveTo(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Position, ret => "moving to area transition: " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name, 3)
                                             ),
-                                        new Decorator(ret => TheVariables.activateInstanceTimer.IsRunning && TheVariables.activateInstanceTimer.ElapsedMilliseconds > 765,
+                                        new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Distance <= 15,
                                             new PrioritySelector(
-                                                new Decorator(ret => LokiPoe.Gui.IsInstanceManagerOpen,
+                                                new Decorator(ret => !newInstance,
                                                     new PrioritySelector(
-                                                        new Decorator(ret => !TheVariables.activateInstanceManagerTimer.IsRunning,
-                                                            new Action(ret => TheVariables.activateInstanceManagerTimer.Start())
-                                                            ),
-                                                        new Decorator(ret => TheVariables.activateInstanceManagerTimer.IsRunning && TheVariables.activateInstanceManagerTimer.ElapsedMilliseconds > 1645,
+                                                        new Decorator(ret => !TheVariables.activateInstanceTimer.IsRunning,
                                                             new Sequence(
-                                                                new Action(ret => LokiPoe.Gui.InstanceManager.JoinNew()),
-                                                                new Action(ret => TheVariables.activateInstanceManagerTimer.Reset())
+                                                                new Action(ret => ExileBoxer.Log.Debug("starting activateInstanceTimer")),
+                                                                new Action(ret => TheVariables.activateInstanceTimer.Start()),
+                                                                new Action(ret => TheVariables.globalTimer.Reset())
+                                                                )
+                                                            ),
+                                                        new Decorator(ret => TheVariables.activateInstanceTimer.IsRunning && TheVariables.activateInstanceTimer.ElapsedMilliseconds > 765,
+                                                            new PrioritySelector(
+                                                                new Decorator(ret => LokiPoe.Gui.IsInstanceManagerOpen,
+                                                                    new Sequence(
+                                                                        new Action(ret => ExileBoxer.Log.Debug("something went wrong! ERROR: MoveToAndTakeAreaTransition#!newInstance")),
+                                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                                        )
+                                                                    ),
+                                                                new Decorator(ret => !LokiPoe.Gui.IsInstanceManagerOpen,
+                                                                    new Sequence(
+                                                                        new Action(ret =>
+                                                                        {
+                                                                            ExileBoxer.Log.Debug("PUSHEDX SAYS LOG THIS: " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Interact(false, false, LokiPoe.InputTargetType.MustMatchTarget));
+                                                                            ExileBoxer.Log.Debug("taking transition " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name);
+                                                                        }),
+                                                                        new Action(ret => TheVariables.activateInstanceTimer.Reset()),
+                                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                                        )
+                                                                    )
                                                                 )
                                                             )
                                                         )
                                                     ),
-                                                new Decorator(ret => !LokiPoe.Gui.IsInstanceManagerOpen,
-                                                    new Sequence(
-                                                        new Action(ret => ExileBoxer.Log.Debug("opening InstanceManager for: " + at.Name)),
-                                                        new Action(ret => TheVariables.activateInstanceTimer.Reset()),
-                                                        new Action(ret => at.Interact(true, false, LokiPoe.InputTargetType.MustMatchTarget))
+                                                new Decorator(ret => newInstance,
+                                                    new PrioritySelector(
+                                                        new Decorator(ret => !TheVariables.activateInstanceTimer.IsRunning,
+                                                            new Sequence(
+                                                                new Action(ret => ExileBoxer.Log.Debug("starting activateInstanceTimer")),
+                                                                new Action(ret => TheVariables.activateInstanceTimer.Start()),
+                                                                new Action(ret => TheVariables.globalTimer.Reset())
+                                                                )
+                                                            ),
+                                                        new Decorator(ret => TheVariables.activateInstanceTimer.IsRunning && TheVariables.activateInstanceTimer.ElapsedMilliseconds > 765,
+                                                            new PrioritySelector(
+                                                                new Decorator(ret => LokiPoe.Gui.IsInstanceManagerOpen,
+                                                                    new PrioritySelector(
+                                                                        new Decorator(ret => !TheVariables.activateInstanceManagerTimer.IsRunning,
+                                                                            new Sequence(
+                                                                                new Action(ret => TheVariables.activateInstanceManagerTimer.Start()),
+                                                                                new Action(ret => TheVariables.globalTimer.Reset())
+                                                                                )
+                                                                            ),
+                                                                        new Decorator(ret => TheVariables.activateInstanceManagerTimer.IsRunning && TheVariables.activateInstanceManagerTimer.ElapsedMilliseconds > 1645,
+                                                                            new Sequence(
+                                                                                new Action(ret => LokiPoe.Gui.InstanceManager.JoinNew()),
+                                                                                new Action(ret => TheVariables.activateInstanceManagerTimer.Reset()),
+                                                                                new Action(ret => TheVariables.globalTimer.Reset())
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                new Decorator(ret => !LokiPoe.Gui.IsInstanceManagerOpen,
+                                                                    new Sequence(
+                                                                        new Action(ret => ExileBoxer.Log.Debug("opening InstanceManager for: " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name)),
+                                                                        new Action(ret => TheVariables.activateInstanceTimer.Reset()),
+                                                                        new Action(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Interact(true, false, LokiPoe.InputTargetType.MustMatchTarget)),
+                                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                                        )
+                                                                    )
+                                                                )
+                                                            )
                                                         )
                                                     )
                                                 )
@@ -290,6 +319,91 @@ namespace ExileBoxer
                                     )
                                 )
                             )
+                        )
+                    )
+                );
+        }
+        public static Composite MoveToAndTakeIslandTransition()
+        {
+            try
+            {
+                if (LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().Count() < 1)
+                    return new Action(ret => BotMain.Stop("islandTransition error"));
+
+            }
+            catch (Exception e)
+            {
+                ExileBoxer.Log.Debug(e.ToString());
+                BotMain.Stop("!!!errör!!!");
+            }
+
+            return new PrioritySelector(
+                new Decorator(ret => !TheVariables.globalTimer.IsRunning,
+                    new Action(ret => TheVariables.globalTimer.Start())
+                    ),
+                new Decorator(ret => TheVariables.globalTimer.IsRunning && TheVariables.globalTimer.ElapsedMilliseconds > 100,
+                    new PrioritySelector(
+                        new Decorator(ret => TheVariables.takeNearestIslandTransitionOldPosition.X > 0 && TheVariables.takeNearestIslandTransitionOldPosition.Distance(LokiPoe.ObjectManager.Me.Position) >= 50,
+                            new Sequence(
+                                new Action(ret => ExileBoxer.Log.Debug("oldPos.Distance = " + TheVariables.takeNearestIslandTransitionOldPosition.Distance(LokiPoe.ObjectManager.Me.Position))),
+                                new Action(ret => ExileBoxer.Log.Debug("successfully took island transition, PAUSE is true now. Press button to re-enable!")),
+                                new Action(ret => TheVariables.takeNearestIslandTransitionOldPosition = new Vector2i(0,0)),
+                                new Action(ret => TheVariables.takeNearestIslandTransition = false),
+                                new Action(ret => TheVariables.activateInstanceTimer.Reset()),
+                                new Action(ret => TheVariables.globalTimer.Reset()),
+                                new Action(ret => TheVariables.PAUSE = true)
+                                )
+                            ),
+                        new Decorator(ret => TheVariables.takeNearestIslandTransitionOldPosition.X <= 0 || TheVariables.takeNearestIslandTransitionOldPosition.Distance(LokiPoe.ObjectManager.Me.Position) < 50,
+                            new PrioritySelector(
+                                new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Distance > 20,
+                                    CommonBehaviors.MoveTo(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Position, ret => "moving to island transition: " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name, 3)
+                                    ),
+                                new Decorator(ret => LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Distance <= 15,
+                                    new PrioritySelector(
+                                        new Decorator(ret => !TheVariables.activateInstanceTimer.IsRunning,
+                                            new Sequence(
+                                                new Action(ret => ExileBoxer.Log.Debug("starting activateInstanceTimer")),
+                                                new Action(ret => TheVariables.activateInstanceTimer.Start()),
+                                                new Action(ret => TheVariables.globalTimer.Reset())
+                                                )
+                                            ),
+                                        new Decorator(ret => TheVariables.activateInstanceTimer.IsRunning && TheVariables.activateInstanceTimer.ElapsedMilliseconds > 765,
+                                            new PrioritySelector(
+                                                new Decorator(ret => LokiPoe.Gui.IsInstanceManagerOpen,
+                                                    new Sequence(
+                                                        new Action(ret => ExileBoxer.Log.Debug("something went wrong! ERROR: MoveToAndTakeAreaTransition#!newInstance")),
+                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                        )
+                                                    ),
+                                                new Decorator(ret => TheVariables.takeNearestIslandTransitionOldPosition.X <= 0,
+                                                    new Sequence(
+                                                        new Action(ret => TheVariables.takeNearestIslandTransitionOldPosition = LokiPoe.ObjectManager.Me.Position),
+                                                        new Action(ret => ExileBoxer.Log.Debug("set oldPos = " + TheVariables.takeNearestIslandTransitionOldPosition)),
+                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                    )
+                                                ),
+                                                new Decorator(ret => !LokiPoe.Gui.IsInstanceManagerOpen,
+                                                    new Sequence(
+                                                        new Action(ret =>
+                                                        {
+                                                            ExileBoxer.Log.Debug("PUSHEDX SAYS LOG THIS: " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Interact(false, false, LokiPoe.InputTargetType.MustMatchTarget));
+                                                            ExileBoxer.Log.Debug("taking transition " + LokiPoe.ObjectManager.Objects.OfType<AreaTransition>().First().Name);
+                                                        }),
+                                                        new Action(ret => TheVariables.activateInstanceTimer.Reset()),
+                                                        new Action(ret => TheVariables.globalTimer.Reset())
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+
+
+                        
+                           
                         )
                     )
                 );
