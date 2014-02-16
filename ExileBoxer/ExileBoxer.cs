@@ -113,6 +113,8 @@ namespace ExileBoxer
             gui = new GUI();
             gui.OnInit();
 
+            ResetVariables();
+
             Log.Debug("you should open the GUI by pressing 'Bot-Config' ... ");
             Log.Debug("you should open the GUI by pressing 'Bot-Config' ... ");
             Log.Debug("you should open the GUI by pressing 'Bot-Config' ... ");
@@ -381,6 +383,63 @@ namespace ExileBoxer
             }
 
             return res;
+        }
+        #endregion
+
+        #region pushin
+        public static void ResetVariables()
+        {
+            ExileBoxer.Log.Debug("### clearing all actions, resetting all vars ###");
+
+            TheVariables.PAUSE = false;
+
+            TheVariables.acceptPartyInviteFrom = string.Empty;
+            TheVariables.nameLeader = string.Empty;
+            TheVariables.areaIdLeader = string.Empty;
+            TheVariables.areaIdMe = string.Empty;
+            TheVariables.areaNameMe = string.Empty;
+            TheVariables.areaNameLeader = string.Empty;
+            TheVariables.targetTown = string.Empty;
+            TheVariables.townIdLeader = "0_0_0";
+            TheVariables.townIdMe = "0_0_0";
+            TheVariables.currentAreaTransition = string.Empty;
+
+            TheVariables.leaveParty = false;
+            TheVariables.makePortal = false;
+            TheVariables.moveToMiddleOfTown = false;
+            TheVariables.checkBox1 = false;
+            TheVariables.checkBox2 = false;
+            TheVariables.inTownMe = false;
+            TheVariables.inTownLeader = false;
+            TheVariables.takeNearestAreaTransition = false;
+            TheVariables.takeNearestIslandTransition = false;
+
+            TheVariables.makePortalTimer = new Stopwatch();
+            TheVariables.takeWpTimer = new Stopwatch();
+            TheVariables.activateInstanceTimer = new Stopwatch();
+            TheVariables.activateInstanceManagerTimer = new Stopwatch();
+            TheVariables.globalTimer = new Stopwatch();
+
+            TheVariables.takePortalFromTownToArea = null;
+            TheVariables.takePortalFromAreaToTown = null;
+            TheVariables.portalFromTownToArea = null;
+            TheVariables.portalFromAreaToTown = null;
+
+            TheVariables.numUpDown1 = 0;
+            TheVariables.numUpDown2 = 0;
+            TheVariables.numUpDown3 = 0;
+            TheVariables.distanceLeader = 0;
+
+            TheVariables.posLeader = new Vector2i();
+            TheVariables.posMe = new Vector2i();
+            TheVariables.town1middle = new Vector2i(252, 245);
+            TheVariables.town2middle = new Vector2i(185, 169);
+            TheVariables.town3middle = new Vector2i(251, 293);
+            TheVariables.takeNearestIslandTransitionOldPosition = new Vector2i(0, 0);
+
+            TheVariables.desiredWP = new WorldAreaEntry();
+
+            TheVariables.availableAreaTransitions = new List<AreaTransition>();
         }
         #endregion
     }

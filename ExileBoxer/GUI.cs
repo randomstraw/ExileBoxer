@@ -35,8 +35,8 @@ namespace ExileBoxer
             checkBox1.Checked = true;
             checkBox2.Checked = true;
             numericUpDown1.Value = 50;
-            numericUpDown2.Value = 63;
-            numericUpDown3.Value = 35;
+            numericUpDown2.Value = 40;
+            numericUpDown3.Value = 20;
             tabControl1.SelectedIndex = 0;
         }
 
@@ -268,61 +268,13 @@ namespace ExileBoxer
         }
         #endregion
 
-        private void button8_Click(object sender, EventArgs e)
+        public void button8_Click(object sender, EventArgs e)
         {
             using (LokiPoe.AcquireFrame())
             {
                 LokiPoe.ObjectManager.ClearCache();
 
-                TheVariables.PAUSE = false;
-
-                TheVariables.acceptPartyInviteFrom = string.Empty;
-                TheVariables.nameLeader = string.Empty;
-                TheVariables.areaIdLeader = string.Empty;
-                TheVariables.areaIdMe = string.Empty;
-                TheVariables.areaNameMe = string.Empty;
-                TheVariables.areaNameLeader = string.Empty;
-                TheVariables.targetTown = string.Empty;
-                TheVariables.townIdLeader = "0_0_0";
-                TheVariables.townIdMe = "0_0_0";
-                TheVariables.currentAreaTransition = string.Empty;
-
-                TheVariables.leaveParty = false;
-                TheVariables.makePortal = false;
-                TheVariables.moveToMiddleOfTown = false;
-                TheVariables.checkBox1 = false;
-                TheVariables.checkBox2 = false;
-                TheVariables.inTownMe = false;
-                TheVariables.inTownLeader = false;
-                TheVariables.takeNearestAreaTransition = false;
-                TheVariables.takeNearestIslandTransition = false;
-
-                TheVariables.makePortalTimer = new Stopwatch();
-                TheVariables.takeWpTimer = new Stopwatch();
-                TheVariables.activateInstanceTimer = new Stopwatch();
-                TheVariables.activateInstanceManagerTimer = new Stopwatch();
-                TheVariables.globalTimer = new Stopwatch();
-
-                TheVariables.takePortalFromTownToArea = null;
-                TheVariables.takePortalFromAreaToTown = null;
-                TheVariables.portalFromTownToArea = null;
-                TheVariables.portalFromAreaToTown = null;
-
-                TheVariables.numUpDown1 = 0;
-                TheVariables.numUpDown2 = 0;
-                TheVariables.numUpDown3 = 0;
-                TheVariables.distanceLeader = 0;
-
-                TheVariables.posLeader = new Vector2i();
-                TheVariables.posMe = new Vector2i();
-                TheVariables.town1middle = new Vector2i(252, 245);
-                TheVariables.town2middle = new Vector2i(185, 169);
-                TheVariables.town3middle = new Vector2i(251, 293);
-                TheVariables.takeNearestIslandTransitionOldPosition = new Vector2i(0,0);
-
-                TheVariables.desiredWP = new WorldAreaEntry();
-
-                TheVariables.availableAreaTransitions = new List<AreaTransition>();
+                ExileBoxer.ResetVariables();
 
             }
         }
